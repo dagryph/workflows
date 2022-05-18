@@ -1,0 +1,86 @@
+name: Reusable Build
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      build_dirs:
+        required: true
+        type: string
+      os_arch:
+        required: true
+        type: string
+      publish:
+        required: true
+        type: boolean
+    secrets:
+      ARTIFACTORY_USER:
+        required: true
+      ARTIFACTORY_TOKEN:
+        required: true
+      MY_GITHUB_TOKEN:
+        required: true
+
+jobs:
+  build:
+    name: Build and Push Artifacts
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: ${{ inputs.app_name }}
+      BUILD_DIRS: ${{ inputs.build_dirs }}
+      OSARCH: ${{ inputs.os_arch }}
+      PUBLISH_ARTIFACTS: ${{ inputs.publish }}
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v2
+      - name: Checkout Ops Harness
+        uses: actions/checkout@v2
+        with:
+          repository: dagryph/ops-harness
+          ref: main
+          path: .ops-harness
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+      - uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.ARTIFACTORY_URL }}
+          username: ${{ secrets.ARTIFACTORY_USER }}
+          password: ${{ secrets.ARTIFACTORY_TOKEN }}
+      #- run: ./.ops-harness/scripts/docker-build || exit 1
+      #  env:
+      #    APP_NAME: ${{ env.APP_NAME }}
+      #    OSARCH: ${{ env.OSARCH }}
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #    ARTIFACTORY_URL: https://acrestech.jfrog.io
+      #    ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+      #    ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
+      #- id: released
+      #  run: VERSION=$(cat .version-unreleased) && APP_NAME=${{ env.APP_NAME }} && echo "::set-output name=version::$VERSION" && echo "::set-output name=app_name::$APP_NAME"
+    outputs:
+      app_name: ${{ steps.released.outputs.app_name }}
+      version: ${{ steps.released.outputs.version }}
+
+  #release:
+  #  name: Publish Release Version
+  #  needs: build
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout Deployment Manifest
+  #      if: ${{ needs.build.outputs.version }}
+  #      uses: actions/checkout@v2
+  #      with:
+  #        repository: acres4/nex7-deployment
+  #        ref: unstable
+  #        token: ${{ secrets.acres_gh_actions_token }}
+  #    - name: Publish version to manifest
+  #      if: ${{ needs.build.outputs.app_name }}
+  #      run: |
+  #        APP_NAME=${{ needs.build.outputs.app_name }}
+  #        VERSION=${{ needs.build.outputs.version }}
+  #        sed -i "s+$APP_NAME:.*+$APP_NAME: $VERSION+g" release.yaml
+  #        git config user.name github-actions
+  #        git config user.email github-actions@github.com
+  #        git add -A
+  #        git diff-index --quiet HEAD || git commit -m "chore: set $APP_NAME to $VERSION"
+  #        git push origin unstable
+          
