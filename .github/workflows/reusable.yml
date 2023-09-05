@@ -33,9 +33,9 @@ jobs:
       PUBLISH_ARTIFACTS: ${{ inputs.publish }}
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Checkout Ops Harness
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: dagryph/ops-harness
           ref: main
@@ -67,7 +67,7 @@ jobs:
   #  steps:
   #    - name: Checkout Deployment Manifest
   #      if: ${{ needs.build.outputs.version }}
-  #      uses: actions/checkout@v3
+  #      uses: actions/checkout@v4
   #      with:
   #        repository: acres4/nex7-deployment
   #        ref: unstable
